@@ -144,10 +144,11 @@ int main( int argc, char *argv[])
    	clock_t startTime = clock();
 	vector <int> LTDP_result = seq_LTDP();
 	
-	cout << "Time for sequential "<<double( clock() - startTime ) / (double)CLOCKS_PER_SEC<< " seconds." << endl;
+	cout<<n<<"\t"<<m<<"\t"<<t<<"\t"<<P<<"\t";
+	cout << double( clock() - startTime ) / (double)CLOCKS_PER_SEC<<"\t";
 	startTime=clock();
     vector <int> Parallel_result = parallel_LTDP();
-    cout << "Time for Rank Convergence "<<double( clock() - startTime ) / (double)CLOCKS_PER_SEC<< " seconds." << endl;
+    cout << double( clock() - startTime ) / (double)CLOCKS_PER_SEC<< endl;
     int s=Parallel_result.size();
     /* cout<<"The resultant sequence(from sequential)"<<endl;
     for(int i=0;i<s;i++)
@@ -289,8 +290,8 @@ vector <int> parallel_LTDP()
 vector<int> block_cyclic()
 {
 	 int P = 5;
-     vector <int> stages[P];
-     vector <double> S[t];
+    vector <int> stages[P];
+    vector <double> S[t];
     vector <int> pred[t];
     vector<double> s(m);
     bool converge=0;
@@ -303,6 +304,7 @@ vector<int> block_cyclic()
 		 ptr=(ptr+1)%P;
 	 }
 	 int flag[t];
+	 omp_lock_t flag[t];
 	 //Variable whose value determines whether the current stage can be executed or not
 	 for(int i=0;i<t;i++)
 	 flag[i]=0;

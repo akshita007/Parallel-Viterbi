@@ -396,3 +396,113 @@ vector<int> block_cyclic()
     
 }
 	
+
+vector<int> block_cyclic_x()
+{
+	 int P = 5;
+    vector <int> stages[P];
+    vector <double> S[t];
+    vector <int> pred[t];
+    vector<double> s(m);
+    bool converge=0;
+     int ptr=0;
+     //0th processor will exxecute stage 0 so 0 will not be assigned specifically
+     //Assigned the stages to each
+     for(int i=0;i<P;i++)
+     {
+		 stages[ptr].push_back(i);
+		 ptr=(ptr+1)%P;
+	 }
+	 int flag[t];
+	 omp_lock_t flag[t];
+	 //Variable whose value determines whether the current stage can be executed or not
+	 for(int i=0;i<t;i++)
+	 flag[i]=0;
+	 //Set the value to 1 for all stages in the first processor
+	 for(int i:stages[0])
+		flag[i]=1;
+	 for(int i=0;i<m;i++)
+		s[i]=(init[i]*B[i][observe[0]]);
+	for(int i=0;i<t;i++)
+	S[i]=s;
+	flag[1]=1;
+	flag[0]=1;
+	 #pragma omp parallel for
+	 for(int p=0; p<P; p++)
+		{
+			for(int i: stages[p])
+			{
+				if(flag[i]==1)
+				{
+					S[i]=dot_product(S[i-1],i,pred[i]);
+					flag[i]=0;
+					flag[(i+1)%t]=1;					
+				}
+			}
+		}
+	vector <bool> conv(n/P);
+		 //instead of p we have n/p 
+	//fix up loop
+	int iter=1;
+	do
+	{
+		#pragma omp parallel for private(s)
+		for(int p=0; p<P; p++)
+		{
+			
+			for(int j=iter;j<stages[p].size();j++)
+			{
+				int i=stages[p][j];
+				if(p==0)
+				conv[i/P]=false;
+				#pragma omp critical
+				{
+					if(flag[i]==1)
+					{
+						s=dot_product(S[i-1],i,pred[i]);
+						flag[i]=0;
+						if(is_parallel( s,S[i]))
+						{
+							//if convergence occurs for this then we need to set for i/P
+							conv[i/P] = true;
+							flag[(i/P +1 )*P] =1;
+							// Set the flag for the next set of stages
+						}
+						else
+						flag[(i+1)%t]=1;
+						
+						S[i] = s;
+						
+					}
+				}
+			}
+		}
+		converge=1;
+		for(int p=iter;p<n/P;p++)
+           converge = converge & conv[p];
+           iter++;
+    }while(!converge );
+    
+    //backward phase
+    double mx = INT_MIN;
+    int indx = 0;
+    vector<int> result;
+    result.resize(t,0);
+    for(int i=0;i<m;i++)
+    {
+		if(pred[t-1][i]>mx)
+        {
+            mx = pred[t-1][i];
+            indx=i;
+        }
+    }
+    int q;
+    q=result[t-1]=indx;
+    for(int i=t-2;i>=0;i--)
+    {
+        q=result[i] =  pred[i+1][q];
+    }
+    return result;
+    
+}
+	
